@@ -1,122 +1,93 @@
 # Project 1 Planning: The Unofficial Guide
 
-> Write this document before you write any pipeline code.
-> Your spec and architecture diagram are what you'll use to direct AI tools (Claude, Copilot, etc.) to generate your implementation — the more specific they are, the more useful the generated code will be.
-> Update the Retrieval Approach and Chunking Strategy sections if you change your approach during implementation.
-> Update this file before starting any stretch features.
-
----
-
 ## Domain
 
-<!-- What domain did you choose? Why is this knowledge valuable and hard to find through official channels? -->
+UCLA Campus Dining
 
----
+UCLA dining gets ranked number 1 in the country basically every year which sounds great but doesn't really tell you anything useful. Like which dining hall is actually worth going to at 7pm on a weekday? Is the meal plan worth it if you're not living on the Hill? The official site just has menus and hours, it doesn't tell you the stuff that actually matters day to day.
+
+The knowledge exists, it's just scattered across reddit threads and yelp reviews and nowhere is it all in one place you can actually search through.
 
 ## Documents
 
-<!-- List your specific sources: URLs, subreddit names, forum threads, or file descriptions.
-     Aim for at least 10 sources that together cover different subtopics or perspectives within your domain. -->
-
 | # | Source | Description | URL or location |
 |---|--------|-------------|-----------------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
-| 6 | | | |
-| 7 | | | |
-| 8 | | | |
-| 9 | | | |
-| 10 | | | |
-
----
+| 1 | UCLA Housing Dining Locations | official hours and meal plan info | https://housing.ucla.edu/dining-locations |
+| 2 | UCLA Housing Discover Dining 2025 | overview of all the dining spots | https://housing.ucla.edu/discover-dining-2025 |
+| 3 | ASUCLA Dining Hall Guide | student-written breakdown of each hall | https://asucla.ucla.edu/ucla/ucla-dining-hall |
+| 4 | UCLA Adminvc Dining Best in Nation 2023 | ranking article with hall descriptions | https://adminvc.ucla.edu/news-views/fall-2023/ucla-dining-named-best-nation-seventh-time |
+| 5 | UCLA Adminvc Dining Number 1 2025 | 2025 update on rankings | https://adminvc.ucla.edu/news-views/summer-2025/ucla-dining-remains-no-1-nation |
+| 6 | Reddit r/UCLA dining hall threads | actual student opinions on each hall | https://www.reddit.com/r/ucla/search/?q=dining+hall&sort=top |
+| 7 | Reddit r/UCLA meal plan threads | is the meal plan worth it debate | https://www.reddit.com/r/ucla/search/?q=meal+plan+worth+it&sort=top |
+| 8 | Niche.com UCLA food reviews | aggregated student ratings | https://www.niche.com/colleges/university-of-california-los-angeles/reviews/?topic=food |
+| 9 | Yelp Bruin Plate | reviews of the healthy dining hall | https://www.yelp.com/biz/bruin-plate-los-angeles |
+| 10 | Yelp De Neve | reviews including late night | https://www.yelp.com/biz/de-neve-dining-los-angeles |
+| 11 | Yelp Epicuria at Covel | reviews of the mediterranean hall | https://www.yelp.com/biz/epicuria-at-covel-los-angeles |
+| 12 | UCLA Dining Portal | menus, allergen info, pricing | https://dining.ucla.edu |
 
 ## Chunking Strategy
 
-<!-- How will you split documents into chunks?
-     State your chunk size (in tokens or characters), overlap size, and explain why those
-     numbers fit the structure of your documents.
-     A review-heavy corpus warrants different chunking than a long FAQ. -->
+**Chunk size:** 300 tokens for the official pages and news articles, 150 for reviews and reddit comments
 
-**Chunk size:**
+**Overlap:** 50 tokens for long documents, 20 for the short review stuff
 
-**Overlap:**
+**Reasoning:** The yelp and reddit content is already pretty short, each comment or review is basically one complete thought so I don't want to split those up. The official pages are longer and info can spill across paragraphs so I need some overlap there or I'll lose context at the boundaries. If chunks are too small I'll get fragments that don't make sense on their own. Too large and a chunk about Bruin Plate ends up mixed with Epicuria content which confuses retrieval.
 
-**Reasoning:**
-
----
+**Final chunk count:** around 280
 
 ## Retrieval Approach
 
-<!-- Which embedding model are you using (e.g., all-MiniLM-L6-v2 via sentence-transformers)?
-     How many chunks will you retrieve per query (top-k)?
-     If you were deploying this for real users and cost wasn't a constraint, what tradeoffs
-     would you weigh in choosing a different embedding model — context length, multilingual
-     support, accuracy on domain-specific text, latency? -->
+**Embedding model:** sentence-transformers/all-MiniLM-L6-v2
 
-**Embedding model:**
+**Top-k:** 5
 
-**Top-k:**
-
-**Production tradeoff reflection:**
-
----
+**Production tradeoff reflection:** I'm using MiniLM because it runs locally and doesn't need an API key which is convenient for this project. If this were a real deployed thing I'd probably look at OpenAI's embedding models for better accuracy, but that costs money per token. MiniLM also has a 256 token limit which is fine for reviews but could be a problem for longer chunks from the official pages. For a real product I'd also think about multilingual support since UCLA has a lot of international students who might search in other languages.
 
 ## Evaluation Plan
 
-<!-- List your 5 test questions with their expected correct answers.
-     Questions should be specific enough that you can judge whether the system's response
-     is right or wrong. "What are good dining halls?" is too vague.
-     "What do students say about wait times at [dining hall name] during lunch?" is testable. -->
-
 | # | Question | Expected answer |
 |---|----------|-----------------|
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | | |
-| 5 | | |
-
----
+| 1 | What dining hall at UCLA is known for healthy food options? | Bruin Plate, it's described as the health focused hall with local produce, organic options, no soda |
+| 2 | What is De Neve Late Night and when does it run? | It's extended hours at De Neve after regular dinner, for meal plan students, runs late into the evening |
+| 3 | How is Epicuria different from De Neve? | Epicuria is Mediterranean food, pasta and pizza. De Neve is American style, burgers, chili, fried chicken |
+| 4 | How many times has UCLA been ranked number 1 for college food? | Nine out of the last ten years as of 2025 per Niche.com |
+| 5 | What do students say about the meal plan if you live off campus? | Mixed, most say it's hard to justify the cost since you can't use it for dinner at the residential halls unless you live there |
 
 ## Anticipated Challenges
 
-<!-- What could go wrong? Name at least two specific risks with reasoning.
-     Consider: noisy or inconsistent documents, missing source attribution, off-topic
-     retrieval, chunks that split key information across boundaries. -->
+1. Reddit and yelp reviews sometimes completely contradict each other. One person loves Bruin Plate, another says it runs out of food by 7. The LLM might just pick one side and present it as fact which would be wrong.
 
-1.
-
-2.
-
----
+2. Some of the sources are from 2021 or 2022 and dining hours and prices change. There's no way for the system to know if a review is outdated without checking manually.
 
 ## Architecture
 
-<!-- Draw a diagram of your pipeline showing the five stages:
-     Document Ingestion → Chunking → Embedding + Vector Store → Retrieval → Generation
-     Label each stage with the tool or library you're using.
-     You can use ASCII art, a Mermaid diagram, or embed a sketch as an image.
-     You'll use this diagram as context when prompting AI tools to implement each stage. -->
+```
+[Documents]          [Chunking]             [Embedding + Store]
+requests +     -->   LangChain          -->  all-MiniLM-L6-v2
+BeautifulSoup        RecursiveCharacter       ChromaDB (local)
+                     TextSplitter
+12 sources           reviews: 150 tok        metadata stored:
+official pages       official: 300 tok       source_type
+reddit threads       overlap: 20-50          dining_hall
+yelp reviews                                 fetch_date
 
----
+[Retrieval]          [Generation]
+ChromaDB        -->  Groq API
+top-k = 5            llama-3.3-70b-versatile
+
+user types query     answer with citations
+embed query          via query.py CLI
+similarity search
+return top 5 chunks
+```
 
 ## AI Tool Plan
 
-<!-- For each part of the pipeline below, describe:
-     - Which AI tool you plan to use (Claude, Copilot, ChatGPT, etc.)
-     - What you'll give it as input (which sections of this planning.md, which requirements)
-     - What you expect it to produce
-     - How you'll verify the output matches your spec
+**Milestone 3 Ingestion and chunking:**
+I'll give Claude the Documents section and Chunking Strategy from this file plus a sample HTML page from UCLA Housing. I want it to write scrape.py that fetches each URL, strips the nav and footer junk, and saves clean txt files. Also chunk.py using RecursiveCharacterTextSplitter with the sizes above. I'll check it worked by looking at a few chunks manually to make sure reviews aren't getting cut in weird places.
 
-     "I'll use AI to help me code" is not a plan.
-     "I'll give Claude my Chunking Strategy section and ask it to implement chunk_text()
-     with my specified chunk size and overlap" is a plan. -->
+**Milestone 4 Embedding and retrieval:**
+I'll give Claude the Retrieval Approach section and show it what the chunk output looks like. I want ingest.py that embeds everything and loads it into ChromaDB with the right metadata. I'll test it by running a quick query directly against the database before hooking up the LLM.
 
-**Milestone 3 — Ingestion and chunking:**
-
-**Milestone 4 — Embedding and retrieval:**
-
-**Milestone 5 — Generation and interface:**
+**Milestone 5 Generation and interface:**
+I'll give Claude the whole planning doc and the 5 evaluation questions. I want query.py that takes a question, grabs top 5 chunks, builds a prompt, calls Groq, and returns an answer with sources. I'll run all 5 test questions and compare to my expected answers.
